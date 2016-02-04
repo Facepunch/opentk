@@ -228,7 +228,7 @@ namespace OpenTK.Platform
 
         public bool SetVibration(int index, float left, float right)
         {
-            return false;
+            return Joystick.SetVibration(index, left, right);
         }
 
         #region Private Members

@@ -1121,6 +1121,11 @@ namespace OpenTK.Platform.MacOS
             return new Guid();
         }
 
+        public bool SetVibration(int index, float left, float right)
+        {
+            return false;
+        }
+
         #endregion
 
         #region NativeMethods

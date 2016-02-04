@@ -38,5 +38,6 @@ namespace OpenTK.Input
         JoystickState GetState(int index);
         JoystickCapabilities GetCapabilities(int index);
         Guid GetGuid(int index);
+        bool SetVibration(int index, float left, float right);
     }
 }

@@ -818,6 +818,24 @@ namespace OpenTK.Platform.Windows
             }
         }
 
+        public bool SetVibration(int index, float left, float right)
+        {
+            lock (UpdateLock)
+            {
+                if (!IsValid(index)) return false;
+
+                Device dev = Devices.FromIndex(index);
+                if (dev.IsXInput)
+                {
+                    return XInput.SetVibration(index, left, right);
+                }
+                else
+                {
+                    return false;
+                }
+            }
+        }
+
         #endregion
     }
 }

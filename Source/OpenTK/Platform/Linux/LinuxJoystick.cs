@@ -528,6 +528,11 @@ namespace OpenTK.Platform.Linux
             return Guid.Empty;
         }
 
+        public bool SetVibration(int index, float left, float right)
+        {
+            return false;
+        }
+
         #endregion
     }
 }

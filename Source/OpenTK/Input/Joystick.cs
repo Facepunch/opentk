@@ -92,6 +92,11 @@ namespace OpenTK.Input
             return implementation.GetGuid(index);
         }
 
+        public static bool SetVibration(int index, float left, float right)
+        {
+            return implementation.SetVibration(index, left, right);
+        }
+
         //public string GetName(int index)
         //{
         //    return implementation.GetName(index);
