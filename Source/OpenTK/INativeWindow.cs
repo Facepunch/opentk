@@ -37,6 +37,22 @@ using OpenTK.Platform;
 namespace OpenTK
 {
     /// <summary>
+    /// Defines the event data for <see cref="INativeWindow.DragFilesAccepted"/> events.
+    /// </summary>
+    public sealed class DragFilesEventArgs : EventArgs
+    {
+        /// <summary>
+        /// The names of files dragged onto the window.
+        /// </summary>
+        public string[] FileNames { get; private set; }
+
+        internal DragFilesEventArgs(string[] fileNames)
+        {
+            FileNames = fileNames;
+        }
+    }
+
+    /// <summary>
     /// Defines the interface for a native window. 
     /// </summary>
     public interface INativeWindow : IDisposable
@@ -65,6 +81,11 @@ namespace OpenTK
         /// Gets a System.Boolean that indicates whether the window has been created and has not been destroyed.
         /// </summary>
         bool Exists { get; }
+
+        /// <summary>
+        /// Gets or sets a System.Boolean that indicates whether files can be dropped onto the window.
+        /// </summary>
+        bool DragAcceptFiles { get; set; }
         
         /// <summary>
         /// Gets the <see cref="OpenTK.Platform.IWindowInfo"/> for this window.
@@ -236,6 +257,12 @@ namespace OpenTK
         /// Occurs when the <see cref="WindowState"/> property of the window changes.
         /// </summary>
         event EventHandler<EventArgs> WindowStateChanged;
+
+        /// <summary>
+        /// Occurs when one or more files are dragged onto the window while
+        /// <see cref="DragAcceptFiles"/> is set to true.
+        /// </summary>
+        event EventHandler<DragFilesEventArgs> DragFilesAccepted;
 
         /// <summary>
         /// Occurs whenever a keybord key is pressed.

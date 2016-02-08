@@ -393,6 +393,29 @@ namespace OpenTK.Platform.Windows
             }
         }
 
+        private void HandleDropFiles(IntPtr handle, WindowMessage message, IntPtr wParam, IntPtr lParam)
+        {
+            try
+            {
+                var count = Functions.DragQueryFile(wParam, 0xFFFFFFFF, null, 0);
+                var files = new string[count];
+                
+                for (var i = 0; i < count; ++i)
+                {
+                    var buffer = new StringBuilder(256);
+                    Functions.DragQueryFile(wParam, (uint) i, buffer, (uint) buffer.Capacity);
+
+                    files[i] = buffer.ToString();
+                }
+
+                OnDragFilesAccepted(new DragFilesEventArgs(files));
+            }
+            finally
+            {
+                Functions.DragFinish(wParam);
+            }
+        }
+
         void HandleChar(IntPtr handle, WindowMessage message, IntPtr wParam, IntPtr lParam)
         {
             char c;
@@ -727,6 +750,10 @@ namespace OpenTK.Platform.Windows
 
                 case WindowMessage.CAPTURECHANGED:
                     HandleCaptureChanged(handle, message, wParam, lParam);
+                    break;
+
+                case WindowMessage.DROPFILES:
+                    HandleDropFiles(handle, message, wParam, lParam);
                     break;
 
                 #endregion
@@ -1169,7 +1196,22 @@ namespace OpenTK.Platform.Windows
 
         #region Exists
 
-        public override  bool Exists { get { return exists; } }
+        public override bool Exists { get { return exists; } }
+
+        #endregion
+
+        #region DragAcceptFiles
+
+        private bool drag_accept_files;
+        public override bool DragAcceptFiles
+        {
+            get { return drag_accept_files; }
+            set
+            {
+                drag_accept_files = value;
+                Functions.DragAcceptFiles(window.Handle, value);
+            }
+        }
 
         #endregion
 

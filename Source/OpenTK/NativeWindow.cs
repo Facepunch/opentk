@@ -605,6 +605,27 @@ namespace OpenTK
 
         #endregion
 
+        #region DragAcceptFiles
+
+        /// <summary>
+        /// Gets or sets a System.Boolean that indicates whether files can be dropped onto the window.
+        /// </summary>
+        public bool DragAcceptFiles
+        {
+            get
+            {
+                EnsureUndisposed();
+                return implementation.DragAcceptFiles;
+            }
+            set
+            {
+                EnsureUndisposed();
+                implementation.DragAcceptFiles = value;
+            }
+        }
+
+        #endregion
+
         #endregion
 
         #region Events
@@ -633,6 +654,12 @@ namespace OpenTK
         /// Occurs when the <see cref="Icon"/> property of the window changes. 
         /// </summary>
         public event EventHandler<EventArgs> IconChanged = delegate { };
+
+        /// <summary>
+        /// Occurs when one or more files are dragged onto the window while
+        /// <see cref="INativeWindow.DragAcceptFiles"/> is set to true.
+        /// </summary>
+        public event EventHandler<DragFilesEventArgs> DragFilesAccepted = delegate { };
 
         /// <summary>
         /// Occurs whenever a keybord key is pressed.
@@ -933,6 +960,11 @@ namespace OpenTK
 
         #endregion
 
+        protected void OnDragFilesAccepted(DragFilesEventArgs e)
+        {
+            DragFilesAccepted(this, e);
+        }
+
         /// <summary>
         /// Raises the <see cref="MouseDown"/> event.
         /// </summary>
@@ -1178,6 +1210,8 @@ namespace OpenTK
 
         #endregion
 
+        private void OnDragFilesAcceptedInternal(object sender, DragFilesEventArgs e) { OnDragFilesAccepted(e); }
+
         #endregion
 
         #region Properties
@@ -1214,6 +1248,7 @@ namespace OpenTK
                     implementation.VisibleChanged += OnVisibleChangedInternal;
                     implementation.WindowBorderChanged += OnWindowBorderChangedInternal;
                     implementation.WindowStateChanged += OnWindowStateChangedInternal;
+                    implementation.DragFilesAccepted += OnDragFilesAcceptedInternal;
                     events = true;
                 }
                 else if (events)
@@ -1238,6 +1273,7 @@ namespace OpenTK
                     implementation.VisibleChanged -= OnVisibleChangedInternal;
                     implementation.WindowBorderChanged -= OnWindowBorderChangedInternal;
                     implementation.WindowStateChanged -= OnWindowStateChangedInternal;
+                    implementation.DragFilesAccepted -= OnDragFilesAcceptedInternal;
                     events = false;
                 }
                 else

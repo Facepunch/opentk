@@ -711,6 +711,18 @@ namespace OpenTK.Platform.SDL2
             }
         }
 
+        public override bool DragAcceptFiles
+        {
+            get
+            {
+                return false;
+            }
+            set
+            {
+                throw new NotImplementedException();
+            }
+        }
+
         public override IWindowInfo WindowInfo
         {
             get

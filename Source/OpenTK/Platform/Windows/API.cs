@@ -56,6 +56,7 @@ namespace OpenTK.Platform.Windows
     using HCURSOR = System.IntPtr;
     using HKEY = System.IntPtr;
     using PHKEY = System.IntPtr;
+    using HDROP = System.IntPtr;
 
     using LRESULT = System.IntPtr;
     using LPVOID = System.IntPtr;
@@ -967,7 +968,17 @@ namespace OpenTK.Platform.Windows
         public static extern BOOL DestroyIcon(HICON hIcon);
 
         #endregion
+        
+        [DllImport("Shell32.dll", SetLastError = true)]
+        public static extern void DragAcceptFiles(HWND hWnd, BOOL fAccept);
 
+        [DllImport("Shell32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        public static extern UINT DragQueryFile(HDROP hDrop, UINT iFile,
+            [MarshalAs(UnmanagedType.LPTStr)] StringBuilder lpszFile,
+            uint cch);
+        
+        [DllImport("Shell32.dll", SetLastError = true)]
+        public static extern void DragFinish(HDROP hDrop);
 
         [DllImport("user32.dll", SetLastError = true)]
         public static extern BOOL SetForegroundWindow(HWND hWnd);

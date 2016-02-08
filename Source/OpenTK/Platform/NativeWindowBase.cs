@@ -127,6 +127,11 @@ namespace OpenTK.Platform
             WindowStateChanged(this, e);
         }
 
+        protected void OnDragFilesAccepted(DragFilesEventArgs e)
+        {
+            DragFilesAccepted(this, e);
+        }
+
         protected void OnKeyDown(Key key, bool repeat)
         {
             KeyboardState.SetKeyState(key, true);
@@ -310,6 +315,7 @@ namespace OpenTK.Platform
         public event EventHandler<EventArgs> FocusedChanged = delegate { };
         public event EventHandler<EventArgs> WindowBorderChanged = delegate { };
         public event EventHandler<EventArgs> WindowStateChanged = delegate { };
+        public event EventHandler<DragFilesEventArgs> DragFilesAccepted = delegate { };
         public event EventHandler<KeyboardKeyEventArgs> KeyDown = delegate { };
         public event EventHandler<KeyPressEventArgs> KeyPress = delegate { };
         public event EventHandler<KeyboardKeyEventArgs> KeyUp = delegate { };
@@ -352,6 +358,8 @@ namespace OpenTK.Platform
         public abstract bool Visible { get; set; }
 
         public abstract bool Exists { get; }
+
+        public abstract bool DragAcceptFiles { get; set; }
 
         public abstract IWindowInfo WindowInfo { get; }
 

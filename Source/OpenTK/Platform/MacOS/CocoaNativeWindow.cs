@@ -825,6 +825,18 @@ namespace OpenTK.Platform.MacOS
             }
         }
 
+        public override bool DragAcceptFiles
+        {
+            get
+            {
+                return false;
+            }
+            set
+            {
+                throw new NotImplementedException();
+            }
+        }
+
         public override IWindowInfo WindowInfo
         {
             get
