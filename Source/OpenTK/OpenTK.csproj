@@ -894,8 +894,5 @@
     </MonoDevelop>
   </ProjectExtensions>
   <ItemGroup />
-  <ItemGroup>
-    <Folder Include="Platform\Linux\" />
-    <Folder Include="Platform\Linux\Bindings\" />
-  </ItemGroup>
+  <ItemGroup />
 </Project>

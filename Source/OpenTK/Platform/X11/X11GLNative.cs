@@ -1642,6 +1642,15 @@ namespace OpenTK.Platform.X11
             }
         }
 
+        public override bool DragAcceptData
+        {
+            get { return false; }
+            set
+            {
+                throw new NotImplementedException();
+            }
+        }
+
         public override void Close() { Exit(); }
 
         #region public void Exit()

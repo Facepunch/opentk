@@ -52,6 +52,33 @@ namespace OpenTK
         }
     }
 
+    [Flags]
+    public enum DragDataType
+    {
+        Text = 1,
+        Url = 2,
+        Bitmap = 4,
+        Files = 8
+    }
+
+    public interface IDragData
+    {
+        bool HasData(DragDataType type);
+
+        string GetText();
+        Uri GetUrl();
+    }
+    
+    public sealed class DragDataEventArgs : EventArgs
+    {
+        public IDragData Data { get; private set; }
+
+        internal DragDataEventArgs(IDragData data)
+        {
+            Data = data;
+        }
+    }
+
     /// <summary>
     /// Defines the interface for a native window. 
     /// </summary>
@@ -86,6 +113,8 @@ namespace OpenTK
         /// Gets or sets a System.Boolean that indicates whether files can be dropped onto the window.
         /// </summary>
         bool DragAcceptFiles { get; set; }
+
+        bool DragAcceptData { get; set; }
         
         /// <summary>
         /// Gets the <see cref="OpenTK.Platform.IWindowInfo"/> for this window.
@@ -263,6 +292,8 @@ namespace OpenTK
         /// <see cref="DragAcceptFiles"/> is set to true.
         /// </summary>
         event EventHandler<DragFilesEventArgs> DragFilesAccepted;
+
+        event EventHandler<DragDataEventArgs> DragDataAccepted;
 
         /// <summary>
         /// Occurs whenever a keybord key is pressed.

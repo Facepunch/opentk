@@ -33,6 +33,8 @@ using OpenTK.Graphics;
 using OpenTK.Input;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
+using System.Runtime.InteropServices.ComTypes;
 #if !MINIMAL
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -1036,6 +1038,171 @@ namespace OpenTK.Platform.Windows
                 Debug.WriteLine(String.Format("Failed to ungrab cursor. Error: {0}",
                     Marshal.GetLastWin32Error()));
         }
+        
+        private static int CompareFormats(FORMATETC a, FORMATETC b)
+        {
+            if (a.cfFormat == (short) ClipboardFormat.UNICODETEXT) return 1;
+            return 1;
+        }
+
+        private class DragData : IDragData
+        {
+            private string _textValue;
+            private Uri _uriValue;
+
+            public DragData(IDataObject dataObject)
+            {
+                var formatEnum = dataObject.EnumFormatEtc(DATADIR.DATADIR_GET);
+                var formatArr = new FORMATETC[1];
+                var enumerated = new int[1];
+
+                var matches = new List<FORMATETC>();
+
+                while (true)
+                {
+                    if(formatEnum.Next(1, formatArr, enumerated) != 0) break;
+                    if (enumerated[0] < 1) break;
+
+                    var format = formatArr[0];
+                    
+                    if (format.tymed != TYMED.TYMED_HGLOBAL) continue;
+                    if (format.cfFormat != (short) ClipboardFormat.TEXT && format.cfFormat != (short) ClipboardFormat.UNICODETEXT) continue;
+
+                    matches.Add(format);
+                }
+
+                if (matches.Count == 0) return;
+
+                matches.Sort(CompareFormats);
+                
+                var bestFormat = matches[0];
+
+                STGMEDIUM medium;
+                try
+                {
+                    dataObject.GetData(ref bestFormat, out medium);
+                }
+                catch (COMException e)
+                {
+                    Debug.WriteLine(e);
+                    throw;
+                }
+                
+                try
+                {
+                    if (medium.unionmember == IntPtr.Zero) throw new NullReferenceException();
+
+                    var handle = new HandleRef(null, medium.unionmember);
+
+                    try
+                    {
+                        unsafe
+                        {
+                            var ptr = Functions.GlobalLock(handle);
+
+                            switch ((ClipboardFormat) bestFormat.cfFormat)
+                            {
+                                case ClipboardFormat.TEXT:
+                                    SetText(new string((sbyte*) ptr));
+                                    break;
+                                case ClipboardFormat.UNICODETEXT:
+                                    SetText(new string((char*) ptr));
+                                    break;
+                            }
+                        }
+                    }
+                    finally
+                    {
+                        Functions.GlobalUnlock(handle);
+                    }
+                }
+                finally
+                {
+                    Functions.ReleaseStgMedium(ref medium);
+                }
+            }
+
+            private void SetText(string text)
+            {
+                _textValue = text;
+
+                if (!Uri.TryCreate(text, UriKind.Absolute, out _uriValue)) _uriValue = null;
+            }
+
+            public bool HasData(DragDataType type)
+            {
+                switch (type)
+                {
+                    case DragDataType.Text:
+                        return _textValue != null;
+                    case DragDataType.Url:
+                        return _uriValue != null;
+                    default:
+                        return false;
+                }
+            }
+
+            public string GetText()
+            {
+                return _textValue;
+            }
+
+            public Uri GetUrl()
+            {
+                return _uriValue;
+            }
+        }
+
+        [ComVisible(true)]
+        [Guid("738addea-307b-4a5a-8d24-2a19610cd7f5")]
+        private class DropTarget : Functions.IDropTarget
+        {
+            private readonly WinGLNative window;
+
+            public DropTarget(WinGLNative window)
+            {
+                this.window = window;
+            }
+
+            public void DragEnter(IDataObject dataObject, uint keyState, Point pt, ref uint effect)
+            {
+
+            }
+
+            public void DragOver(uint keyState, Point pt, ref uint effect)
+            {
+
+            }
+
+            public void DragLeave()
+            {
+
+            }
+
+            public void Drop(IDataObject dataObject, uint keyState, Point pt, ref uint effect)
+            {
+                if (!window.DragAcceptData) return;
+
+                window.OnDragDataAccepted(new DragDataEventArgs(new DragData(dataObject)));
+            }
+        }
+        
+        private DropTarget drop_target;
+        void SetupDropTarget()
+        {
+            if (drop_target != null) return;
+
+            Functions.OleInitialize(IntPtr.Zero);
+            
+            drop_target = new DropTarget(this);
+
+            var result = Functions.RegisterDragDrop(window.Handle, drop_target);
+
+            if (result != 0)
+            {
+                throw new Exception(string.Format("Result: {0}", result));
+            }
+        }
 
         #endregion
 
@@ -1214,6 +1381,17 @@ namespace OpenTK.Platform.Windows
         }
 
         #endregion
+
+        private bool drag_accept_data;
+        public override bool DragAcceptData
+        {
+            get { return drag_accept_data; }
+            set
+            {
+                drag_accept_data = value;
+                if (value) SetupDropTarget();
+            }
+        }
 
         #region Cursor
 

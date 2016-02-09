@@ -626,6 +626,20 @@ namespace OpenTK
 
         #endregion
 
+        public bool DragAcceptData
+        {
+            get
+            {
+                EnsureUndisposed();
+                return implementation.DragAcceptData;
+            }
+            set
+            {
+                EnsureUndisposed();
+                implementation.DragAcceptData = value;
+            }
+        }
+
         #endregion
 
         #region Events
@@ -660,6 +674,8 @@ namespace OpenTK
         /// <see cref="INativeWindow.DragAcceptFiles"/> is set to true.
         /// </summary>
         public event EventHandler<DragFilesEventArgs> DragFilesAccepted = delegate { };
+
+        public event EventHandler<DragDataEventArgs> DragDataAccepted = delegate { };
 
         /// <summary>
         /// Occurs whenever a keybord key is pressed.
@@ -965,6 +981,11 @@ namespace OpenTK
             DragFilesAccepted(this, e);
         }
 
+        protected void OnDragDataAccepted(DragDataEventArgs e)
+        {
+            DragDataAccepted(this, e);
+        }
+
         /// <summary>
         /// Raises the <see cref="MouseDown"/> event.
         /// </summary>
@@ -1211,6 +1232,7 @@ namespace OpenTK
         #endregion
 
         private void OnDragFilesAcceptedInternal(object sender, DragFilesEventArgs e) { OnDragFilesAccepted(e); }
+        private void OnDragDataAcceptedInternal(object sender, DragDataEventArgs e) { OnDragDataAccepted(e); }
 
         #endregion
 
@@ -1249,6 +1271,7 @@ namespace OpenTK
                     implementation.WindowBorderChanged += OnWindowBorderChangedInternal;
                     implementation.WindowStateChanged += OnWindowStateChangedInternal;
                     implementation.DragFilesAccepted += OnDragFilesAcceptedInternal;
+                    implementation.DragDataAccepted += OnDragDataAcceptedInternal;
                     events = true;
                 }
                 else if (events)
@@ -1274,6 +1297,7 @@ namespace OpenTK
                     implementation.WindowBorderChanged -= OnWindowBorderChangedInternal;
                     implementation.WindowStateChanged -= OnWindowStateChangedInternal;
                     implementation.DragFilesAccepted -= OnDragFilesAcceptedInternal;
+                    implementation.DragDataAccepted -= OnDragDataAcceptedInternal;
                     events = false;
                 }
                 else

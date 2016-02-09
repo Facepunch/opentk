@@ -33,6 +33,7 @@ using System;
 using System.Drawing;
 #endif
 using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 using System.Security;
 using OpenTK.Platform.Common;
@@ -98,7 +99,7 @@ namespace OpenTK.Platform.Windows
     using System.Diagnostics;
 
     #endregion
-
+    
     /// \internal
     /// <summary>
     /// For internal use by OpenTK only!
@@ -979,6 +980,32 @@ namespace OpenTK.Platform.Windows
         
         [DllImport("Shell32.dll", SetLastError = true)]
         public static extern void DragFinish(HDROP hDrop);
+
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        [Guid("00000122-0000-0000-C000-000000000046")] // This is the value of IID_IDropTarget from the Platform SDK.
+        [ComImport]
+        public interface IDropTarget
+        {
+            void DragEnter([In] IDataObject dataObject, [In] uint keyState, [In] Point pt, [In, Out] ref uint effect);
+            void DragOver([In] uint keyState, [In] Point pt, [In, Out] ref uint effect);
+            void DragLeave();
+            void Drop([In] IDataObject dataObject, [In] uint keyState, [In] Point pt, [In, Out] ref uint effect);
+        }
+
+        [DllImport("Kernel32.dll", ExactSpelling = true, CharSet = CharSet.Auto)]
+        public static extern IntPtr GlobalLock(HandleRef handle);
+
+        [DllImport("Kernel32.dll", ExactSpelling = true, CharSet = CharSet.Auto)]
+        public static extern IntPtr GlobalUnlock(HandleRef handle);
+
+        [DllImport("ole32.dll", SetLastError = true)]
+        public static extern int OleInitialize(IntPtr pvReserved);
+
+        [DllImport("ole32.dll", SetLastError = true)]
+        public static extern int RegisterDragDrop(HWND hwnd, IDropTarget pDropTarget);
+
+        [DllImport("ole32.dll", SetLastError = true)]
+        public static extern void ReleaseStgMedium(ref STGMEDIUM medium);
 
         [DllImport("user32.dll", SetLastError = true)]
         public static extern BOOL SetForegroundWindow(HWND hWnd);
@@ -4707,6 +4734,13 @@ namespace OpenTK.Platform.Windows
         PORT = 3,
         INTERFACE = 5,
         HANDLE = 6,
+    }
+
+    enum ClipboardFormat : short
+    {
+        TEXT = 1,
+        UNICODETEXT = 13,
+        HDROP = 15
     }
 
     #endregion
