@@ -395,21 +395,27 @@ namespace OpenTK.Platform.Windows
             }
         }
 
+        private static string[] GetDroppedFileNames(IntPtr hDrop)
+        {
+            var count = Functions.DragQueryFile(hDrop, 0xFFFFFFFF, null, 0);
+            var files = new string[count];
+
+            for (var i = 0; i < count; ++i)
+            {
+                var buffer = new StringBuilder(256);
+                Functions.DragQueryFile(hDrop, (uint) i, buffer, (uint) buffer.Capacity);
+
+                files[i] = buffer.ToString();
+            }
+
+            return files;
+        }
+
         private void HandleDropFiles(IntPtr handle, WindowMessage message, IntPtr wParam, IntPtr lParam)
         {
             try
             {
-                var count = Functions.DragQueryFile(wParam, 0xFFFFFFFF, null, 0);
-                var files = new string[count];
-                
-                for (var i = 0; i < count; ++i)
-                {
-                    var buffer = new StringBuilder(256);
-                    Functions.DragQueryFile(wParam, (uint) i, buffer, (uint) buffer.Capacity);
-
-                    files[i] = buffer.ToString();
-                }
-
+                var files = GetDroppedFileNames(wParam);
                 OnDragFilesAccepted(new DragFilesEventArgs(files));
             }
             finally
@@ -1047,6 +1053,7 @@ namespace OpenTK.Platform.Windows
 
         private class DragData : IDragData
         {
+            private string[] _filesValue;
             private string _textValue;
             private Uri _uriValue;
 
@@ -1066,7 +1073,9 @@ namespace OpenTK.Platform.Windows
                     var format = formatArr[0];
                     
                     if (format.tymed != TYMED.TYMED_HGLOBAL) continue;
-                    if (format.cfFormat != (short) ClipboardFormat.TEXT && format.cfFormat != (short) ClipboardFormat.UNICODETEXT) continue;
+                    if (format.cfFormat != (short) ClipboardFormat.TEXT
+                        && format.cfFormat != (short) ClipboardFormat.UNICODETEXT
+                        && format.cfFormat != (short) ClipboardFormat.HDROP) continue;
 
                     matches.Add(format);
                 }
@@ -1108,6 +1117,9 @@ namespace OpenTK.Platform.Windows
                                 case ClipboardFormat.UNICODETEXT:
                                     SetText(new string((char*) ptr));
                                     break;
+                                case ClipboardFormat.HDROP:
+                                    SetFiles(GetDroppedFileNames(ptr));
+                                    break;
                             }
                         }
                     }
@@ -1120,6 +1132,13 @@ namespace OpenTK.Platform.Windows
                 {
                     Functions.ReleaseStgMedium(ref medium);
                 }
+            }
+
+            private void SetFiles(string[] fileNames)
+            {
+                _filesValue = fileNames;
+
+                if (fileNames.Length == 1) SetText(fileNames[0]);
             }
 
             private void SetText(string text)
@@ -1137,9 +1156,16 @@ namespace OpenTK.Platform.Windows
                         return _textValue != null;
                     case DragDataType.Url:
                         return _uriValue != null;
+                    case DragDataType.Files:
+                        return _filesValue != null && _filesValue.Length > 0;
                     default:
                         return false;
                 }
+            }
+
+            public string[] GetFiles()
+            {
+                return _filesValue;
             }
 
             public string GetText()
@@ -1183,7 +1209,16 @@ namespace OpenTK.Platform.Windows
             {
                 if (!window.DragAcceptData) return;
 
-                window.OnDragDataAccepted(new DragDataEventArgs(new DragData(dataObject)));
+                var data = new DragData(dataObject);
+
+                if (window.DragAcceptFiles && data.HasData(DragDataType.Files))
+                {
+                    window.OnDragFilesAccepted(new DragFilesEventArgs(data.GetFiles()));
+                }
+                else
+                {
+                    window.OnDragDataAccepted(new DragDataEventArgs(data));
+                }
             }
         }
         
